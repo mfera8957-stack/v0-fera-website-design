@@ -203,21 +203,127 @@ function CursorFollower({
   springX: ReturnType<typeof useSpring>
   springY: ReturnType<typeof useSpring>
 }) {
-  const size = 120
-  const x = useTransform(springX, [-0.5, 0.5], [-size, window.innerWidth + size])
-  const y = useTransform(springY, [-0.5, 0.5], [-size, window.innerHeight + size])
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 })
+  
+  useEffect(() => {
+    setDimensions({ width: window.innerWidth, height: window.innerHeight })
+    const handleResize = () => {
+      setDimensions({ width: window.innerWidth, height: window.innerHeight })
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
+  const size = 140
+  const x = useTransform(springX, [-0.5, 0.5], [-size / 2, dimensions.width - size / 2])
+  const y = useTransform(springY, [-0.5, 0.5], [-size / 2, dimensions.height - size / 2])
+
+  if (dimensions.width === 0) return null
 
   return (
-    <motion.div
-      className="fixed pointer-events-none z-0 mix-blend-difference"
-      style={{
-        x,
-        y,
-        width: size,
-        height: size,
-      }}
-    >
-      <div className="w-full h-full rounded-full bg-foreground/[0.03] blur-3xl" />
-    </motion.div>
+    <>
+      {/* SVG Filter for chromatic aberration distortion */}
+      <svg className="fixed w-0 h-0" aria-hidden="true">
+        <defs>
+          <filter id="glass-distortion" x="-50%" y="-50%" width="200%" height="200%">
+            {/* Turbulence for organic glass-like distortion */}
+            <feTurbulence 
+              type="fractalNoise" 
+              baseFrequency="0.015" 
+              numOctaves="2" 
+              seed="5"
+              result="noise"
+            />
+            {/* Displacement map for the warping effect */}
+            <feDisplacementMap 
+              in="SourceGraphic" 
+              in2="noise" 
+              scale="8" 
+              xChannelSelector="R" 
+              yChannelSelector="G"
+              result="displaced"
+            />
+            {/* Chromatic aberration - split RGB channels */}
+            <feOffset in="displaced" dx="-2" dy="0" result="red" />
+            <feOffset in="displaced" dx="2" dy="0" result="blue" />
+            <feOffset in="displaced" dx="0" dy="0" result="green" />
+            {/* Extract color channels */}
+            <feColorMatrix 
+              in="red" 
+              type="matrix" 
+              values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0"
+              result="redChannel"
+            />
+            <feColorMatrix 
+              in="green" 
+              type="matrix" 
+              values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0"
+              result="greenChannel"
+            />
+            <feColorMatrix 
+              in="blue" 
+              type="matrix" 
+              values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0"
+              result="blueChannel"
+            />
+            {/* Combine channels with screen blend for that rainbow glass effect */}
+            <feBlend in="redChannel" in2="greenChannel" mode="screen" result="rg" />
+            <feBlend in="rg" in2="blueChannel" mode="screen" result="final" />
+          </filter>
+        </defs>
+      </svg>
+
+      {/* Glass droplet that follows cursor */}
+      <motion.div
+        className="fixed pointer-events-none z-[100]"
+        style={{
+          x,
+          y,
+          width: size,
+          height: size,
+        }}
+      >
+        {/* Main glass orb with backdrop blur and distortion */}
+        <div 
+          className="absolute inset-0 rounded-full"
+          style={{
+            backdropFilter: 'blur(12px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(12px) saturate(180%)',
+            filter: 'url(#glass-distortion)',
+          }}
+        />
+        {/* Inner glass highlight for depth */}
+        <div 
+          className="absolute inset-2 rounded-full opacity-60"
+          style={{
+            background: 'radial-gradient(ellipse at 30% 20%, rgba(255,255,255,0.4) 0%, transparent 50%)',
+          }}
+        />
+        {/* Colored edge refraction */}
+        <div 
+          className="absolute inset-0 rounded-full opacity-30"
+          style={{
+            background: `
+              radial-gradient(circle at 20% 30%, rgba(255,100,100,0.3) 0%, transparent 40%),
+              radial-gradient(circle at 80% 30%, rgba(100,100,255,0.3) 0%, transparent 40%),
+              radial-gradient(circle at 50% 80%, rgba(100,255,100,0.2) 0%, transparent 40%)
+            `,
+          }}
+        />
+        {/* Glass border/edge */}
+        <div 
+          className="absolute inset-0 rounded-full"
+          style={{
+            background: 'transparent',
+            boxShadow: `
+              inset 0 0 20px rgba(255,255,255,0.2),
+              inset 0 0 40px rgba(255,255,255,0.1),
+              0 0 30px rgba(0,0,0,0.05)
+            `,
+            border: '1px solid rgba(255,255,255,0.15)',
+          }}
+        />
+      </motion.div>
+    </>
   )
 }
