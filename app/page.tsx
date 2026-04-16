@@ -104,6 +104,7 @@ export default function HomePage() {
               ease: [0.16, 1, 0.3, 1] 
             }}
             className="relative text-[20vw] md:text-[18vw] lg:text-[16vw] font-bold tracking-[-0.04em] leading-[0.85] select-none"
+            style={{ fontFamily: 'Helvetica, Arial, sans-serif' }}
           >
             <span className="relative inline-block">
               {/* Glitch/shadow layers for depth */}
