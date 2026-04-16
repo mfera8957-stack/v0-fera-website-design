@@ -103,28 +103,11 @@ export default function HomePage() {
               delay: 0.4, 
               ease: [0.16, 1, 0.3, 1] 
             }}
-            className="relative text-[20vw] md:text-[18vw] lg:text-[16vw] font-bold tracking-[-0.04em] leading-[0.85] select-none"
-            style={{ fontFamily: 'Helvetica, Arial, sans-serif' }}
+            className="relative text-[20vw] md:text-[18vw] lg:text-[16vw] font-bold tracking-[-0.04em] leading-[0.85] select-none flex"
           >
-            <span className="relative inline-block">
-              {/* Glitch/shadow layers for depth */}
-              <span 
-                className="absolute inset-0 text-foreground/[0.03] blur-[2px]"
-                style={{ transform: 'translate(4px, 4px)' }}
-                aria-hidden="true"
-              >
-                FERA
-              </span>
-              <span 
-                className="absolute inset-0 text-foreground/[0.02] blur-[4px]"
-                style={{ transform: 'translate(8px, 8px)' }}
-                aria-hidden="true"
-              >
-                FERA
-              </span>
-              {/* Main text */}
-              <span className="relative">FERA</span>
-            </span>
+            {['F', 'E', 'R', 'A'].map((letter, index) => (
+              <HoverLetter key={index} letter={letter} index={index} />
+            ))}
           </motion.h1>
         </motion.div>
 
@@ -168,6 +151,71 @@ export default function HomePage() {
 
       
     </main>
+  )
+}
+
+const RANDOM_FONTS = [
+  'Georgia, serif',
+  'Times New Roman, serif',
+  'Courier New, monospace',
+  'Impact, sans-serif',
+  'Comic Sans MS, cursive',
+  'Trebuchet MS, sans-serif',
+  'Verdana, sans-serif',
+  'Palatino, serif',
+  'Garamond, serif',
+  'Bookman, serif',
+  'Arial Black, sans-serif',
+  'Brush Script MT, cursive',
+  'Lucida Console, monospace',
+  'Copperplate, serif',
+  'Papyrus, fantasy',
+]
+
+function HoverLetter({ letter, index }: { letter: string; index: number }) {
+  const [font, setFont] = useState('Helvetica, Arial, sans-serif')
+  const [isHovered, setIsHovered] = useState(false)
+
+  const handleMouseEnter = () => {
+    const randomFont = RANDOM_FONTS[Math.floor(Math.random() * RANDOM_FONTS.length)]
+    setFont(randomFont)
+    setIsHovered(true)
+  }
+
+  const handleMouseLeave = () => {
+    setFont('Helvetica, Arial, sans-serif')
+    setIsHovered(false)
+  }
+
+  return (
+    <motion.span
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      className="relative inline-block cursor-default"
+      style={{ fontFamily: font }}
+      animate={{ 
+        scale: isHovered ? 1.05 : 1,
+      }}
+      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+    >
+      {/* Shadow layers */}
+      <span 
+        className="absolute inset-0 text-foreground/[0.03] blur-[2px]"
+        style={{ transform: 'translate(4px, 4px)', fontFamily: font }}
+        aria-hidden="true"
+      >
+        {letter}
+      </span>
+      <span 
+        className="absolute inset-0 text-foreground/[0.02] blur-[4px]"
+        style={{ transform: 'translate(8px, 8px)', fontFamily: font }}
+        aria-hidden="true"
+      >
+        {letter}
+      </span>
+      {/* Main letter */}
+      <span className="relative">{letter}</span>
+    </motion.span>
   )
 }
 
