@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
-import { motion, useMotionValue, useSpring, useTransform, AnimatePresence } from "framer-motion"
+import { motion, useMotionValue, useSpring, useTransform } from "framer-motion"
 
 export default function HomePage() {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -165,8 +165,7 @@ export default function HomePage() {
         </motion.div>
       </div>
 
-      {/* Glass trail following cursor */}
-      {mounted && <GlassTrail />}
+      
     </main>
   )
 }
@@ -196,125 +195,4 @@ function NavLink({
   )
 }
 
-function GlassTrail() {
-  const [trail, setTrail] = useState<Array<{ x: number; y: number; id: number }>>([])
-  const mouseRef = useRef({ x: 0, y: 0 })
-  const idCounter = useRef(0)
 
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      mouseRef.current = { x: e.clientX, y: e.clientY }
-    }
-    window.addEventListener('mousemove', handleMouseMove)
-    return () => window.removeEventListener('mousemove', handleMouseMove)
-  }, [])
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const { x, y } = mouseRef.current
-      if (x === 0 && y === 0) return
-      
-      idCounter.current += 1
-      setTrail(prev => {
-        const newTrail = [...prev, { x, y, id: idCounter.current }]
-        // Keep last 12 points for a nice trail length
-        return newTrail.slice(-12)
-      })
-    }, 40) // Spawn new orb every 40ms
-
-    return () => clearInterval(interval)
-  }, [])
-
-  return (
-    <>
-      {/* SVG Filters for chromatic aberration */}
-      <svg className="fixed w-0 h-0" aria-hidden="true">
-        <defs>
-          <filter id="glass-chromatic" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="0.5" result="blur" />
-            <feOffset in="blur" dx="-3" dy="0" result="red" />
-            <feOffset in="blur" dx="3" dy="0" result="blue" />
-            <feOffset in="blur" dx="0" dy="0" result="green" />
-            <feColorMatrix in="red" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="redChannel" />
-            <feColorMatrix in="green" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" result="greenChannel" />
-            <feColorMatrix in="blue" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" result="blueChannel" />
-            <feBlend in="redChannel" in2="greenChannel" mode="screen" result="rg" />
-            <feBlend in="rg" in2="blueChannel" mode="screen" />
-          </filter>
-        </defs>
-      </svg>
-
-      {/* Trail orbs */}
-      <div className="fixed inset-0 pointer-events-none z-[100]">
-        <AnimatePresence>
-        {trail.map((point, index) => {
-          const age = (index + 1) / trail.length // 0 to 1, older to newer
-          const size = 30 + age * 70 // 30px to 100px
-          const opacity = 0.15 + age * 0.5 // Fade older orbs
-          
-          return (
-            <motion.div
-              key={point.id}
-              initial={{ scale: 0.3, opacity: 0 }}
-              animate={{ 
-                scale: 1, 
-                opacity: opacity,
-                x: point.x - size / 2,
-                y: point.y - size / 2,
-              }}
-              exit={{ scale: 0, opacity: 0 }}
-              transition={{ 
-                type: "spring",
-                damping: 20 + (1 - age) * 15, // Older = more damping = slower
-                stiffness: 150 - (1 - age) * 80, // Older = less stiff = laggier
-              }}
-              style={{ width: size, height: size }}
-              className="absolute"
-            >
-              {/* Glass orb with backdrop blur */}
-              <div 
-                className="absolute inset-0 rounded-full"
-                style={{
-                  backdropFilter: `blur(${8 + age * 8}px) saturate(${120 + age * 60}%)`,
-                  WebkitBackdropFilter: `blur(${8 + age * 8}px) saturate(${120 + age * 60}%)`,
-                  filter: 'url(#glass-chromatic)',
-                }}
-              />
-              {/* Rainbow refraction colors */}
-              <div 
-                className="absolute inset-0 rounded-full"
-                style={{
-                  background: `
-                    radial-gradient(circle at 25% 25%, rgba(255,120,180,${0.2 * age}) 0%, transparent 50%),
-                    radial-gradient(circle at 75% 25%, rgba(120,180,255,${0.2 * age}) 0%, transparent 50%),
-                    radial-gradient(circle at 50% 75%, rgba(180,255,120,${0.15 * age}) 0%, transparent 50%),
-                    radial-gradient(circle at 50% 50%, rgba(255,200,100,${0.1 * age}) 0%, transparent 70%)
-                  `,
-                }}
-              />
-              {/* Glass highlight */}
-              <div 
-                className="absolute inset-[15%] rounded-full"
-                style={{
-                  background: `radial-gradient(ellipse at 30% 20%, rgba(255,255,255,${0.5 * age}) 0%, transparent 60%)`,
-                }}
-              />
-              {/* Glass edge */}
-              <div 
-                className="absolute inset-0 rounded-full"
-                style={{
-                  boxShadow: `
-                    inset 0 0 ${10 + age * 15}px rgba(255,255,255,${0.15 * age}),
-                    0 0 ${15 + age * 20}px rgba(0,0,0,${0.03 * age})
-                  `,
-                  border: `1px solid rgba(255,255,255,${0.12 * age})`,
-                }}
-              />
-            </motion.div>
-          )
-        })}
-        </AnimatePresence>
-      </div>
-    </>
-  )
-}
