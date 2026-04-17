@@ -1,225 +1,252 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
-import { motion, useMotionValue, useSpring, useTransform } from "framer-motion"
+import Image from "next/image"
+import { motion } from "framer-motion"
+
+// Letter sprite data with 2 frames each
+const LETTER_SPRITES = {
+  F: {
+    frame1: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/F_frame1-PpL1qrYzb3YUcvmNxg7l2RKfy3Tsrq.png",
+    frame2: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/F_frame2-aNtO8ewASysaHgTCuHb8Lwvo71uYCh.png",
+  },
+  E: {
+    frame1: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/E_frame1-m1ZZUaVj8cfDZlSOxpTQ28rvLSRaaL.png",
+    frame2: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/E_frame2-BzXWjG3GAaRurlx7P6PzlvXLVD6lNS.png",
+  },
+  R: {
+    frame1: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/R_frame1-72HQAKEZHmtM1xVLkD5FOLjFhKB2Eh.png",
+    frame2: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/R_frame2-0sb4bDfW8Ig8OE7UkAi8BhyFuSoS0s.png",
+  },
+  A: {
+    frame1: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/A_frame1-6BecOEf51xK2tmsu8uMm81sFCtz0LB.png",
+    frame2: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/A_frame2-Ds2mXfnNnzSOyXDb9IEJf3CV4tX2im.png",
+  },
+}
+
+const SKY_FRAMES = {
+  frame1: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Sky1.png-2sJJuks0l1UOKxTfYQqdecYGH4Zgqy.jpeg",
+  frame2: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/sky2.png-fDVxaadeYCSUXMNHCsXjsRQTsmSLBW.jpeg",
+}
 
 export default function HomePage() {
-  const containerRef = useRef<HTMLDivElement>(null)
   const [mounted, setMounted] = useState(false)
-  
-  const mouseX = useMotionValue(0)
-  const mouseY = useMotionValue(0)
-  
-  const springConfig = { damping: 25, stiffness: 150 }
-  const springX = useSpring(mouseX, springConfig)
-  const springY = useSpring(mouseY, springConfig)
-  
-  const rotateX = useTransform(springY, [-0.5, 0.5], [2, -2])
-  const rotateY = useTransform(springX, [-0.5, 0.5], [-2, 2])
+  const [skyFrame, setSkyFrame] = useState(1)
 
   useEffect(() => {
     setMounted(true)
+    // Sky background animation - slower interval (1.5 seconds)
+    const skyInterval = setInterval(() => {
+      setSkyFrame(prev => prev === 1 ? 2 : 1)
+    }, 1500)
+    
+    return () => clearInterval(skyInterval)
   }, [])
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!containerRef.current) return
-    const rect = containerRef.current.getBoundingClientRect()
-    const x = (e.clientX - rect.left) / rect.width - 0.5
-    const y = (e.clientY - rect.top) / rect.height - 0.5
-    mouseX.set(x)
-    mouseY.set(y)
-  }
-
-  const handleMouseLeave = () => {
-    mouseX.set(0)
-    mouseY.set(0)
-  }
-
   return (
-    <main
-      ref={containerRef}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      className="relative min-h-screen bg-background text-foreground overflow-hidden selection:bg-foreground selection:text-background"
-    >
-      {/* Subtle animated background grid */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+    <main className="relative text-foreground selection:bg-foreground selection:text-background">
+      {/* Fixed animated sky background */}
+      <div className="fixed inset-0 z-0">
+        <Image
+          src={skyFrame === 1 ? SKY_FRAMES.frame1 : SKY_FRAMES.frame2}
+          alt=""
+          fill
+          className="object-cover transition-opacity duration-700"
+          priority
+          unoptimized
+        />
+      </div>
+
+      {/* Hero Section - Full viewport */}
+      <section className="relative z-10 flex flex-col items-center justify-center min-h-screen px-6">
+        {/* Animated FERA title using letter sprites */}
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: mounted ? 0.03 : 0 }}
-          transition={{ duration: 2, delay: 1 }}
-          className="absolute inset-0"
-          style={{
-            backgroundImage: `
-              linear-gradient(to right, currentColor 1px, transparent 1px),
-              linear-gradient(to bottom, currentColor 1px, transparent 1px)
-            `,
-            backgroundSize: '80px 80px',
+          initial={{ opacity: 0, scale: 0.9, y: 40 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ 
+            duration: 1.2, 
+            delay: 0.4, 
+            ease: [0.16, 1, 0.3, 1] 
           }}
-        />
-      </div>
-
-      {/* Navigation */}
-      <motion.nav
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-        className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-6 md:px-12 md:py-8"
-      >
-        <Link 
-          href="/credits" 
-          className="group relative text-xs tracking-[0.2em] uppercase font-medium"
+          className="flex items-center justify-center gap-[-2vw] md:gap-[-1vw]"
         >
-          <span className="relative z-10">Credits</span>
-          <span className="absolute bottom-0 left-0 w-0 h-px bg-foreground transition-all duration-300 ease-out group-hover:w-full" />
-        </Link>
-        
-        <div className="flex items-center gap-8">
-          <NavLink href="https://www.instagram.com/mfera_0/" external>
-            Instagram
-          </NavLink>
-          <NavLink href="https://www.beatstars.com/mfera" external>
-            BeatStars
-          </NavLink>
-          <NavLink href="mailto:mfera8957@gmail.com">
-            Email
-          </NavLink>
-        </div>
-      </motion.nav>
+          {(['F', 'E', 'R', 'A'] as const).map((letter, index) => (
+            <AnimatedLetter 
+              key={letter} 
+              letter={letter} 
+              delay={index * 0.1} 
+            />
+          ))}
+        </motion.div>
 
-      {/* Main content */}
-      <div className="relative flex flex-col items-center justify-center min-h-screen px-6">
-        {/* Giant FERA title with parallax effect */}
+        {/* Scroll indicator */}
         <motion.div
-          style={{ rotateX, rotateY, transformPerspective: 1000 }}
-          className="relative"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1, delay: 1.5 }}
+          className="absolute bottom-8 left-1/2 -translate-x-1/2"
         >
-          <motion.h1
-            initial={{ opacity: 0, scale: 0.9, y: 40 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ 
-              duration: 1.2, 
-              delay: 0.4, 
-              ease: [0.16, 1, 0.3, 1] 
-            }}
-            className="relative text-[20vw] md:text-[18vw] lg:text-[16vw] font-bold tracking-[-0.04em] leading-[0.85] select-none flex"
+          <motion.div
+            animate={{ y: [0, 8, 0] }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+            className="w-6 h-10 rounded-full border-2 border-white/30 flex items-start justify-center p-2"
           >
-            {['F', 'E', 'R', 'A'].map((letter, index) => (
-              <HoverLetter key={index} letter={letter} index={index} />
-            ))}
-          </motion.h1>
+            <motion.div className="w-1 h-2 bg-white/50 rounded-full" />
+          </motion.div>
+        </motion.div>
+      </section>
+
+      {/* Content Section - Below the fold with glass containers */}
+      <section className="relative z-10 min-h-screen px-6 py-24 flex flex-col items-center justify-center gap-12">
+        {/* Main info glass card */}
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          className="w-full max-w-2xl"
+        >
+          <div 
+            className="p-8 md:p-12 rounded-2xl"
+            style={{
+              background: 'rgba(255, 255, 255, 0.15)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 0 0 1px rgba(255, 255, 255, 0.2)',
+            }}
+          >
+            <h2 
+              className="text-2xl md:text-3xl font-bold mb-4 text-white"
+              style={{ textShadow: '0 2px 10px rgba(0,0,0,0.2)' }}
+            >
+              Swiss Producer
+            </h2>
+            <p 
+              className="text-white/80 text-sm md:text-base leading-relaxed mb-8"
+              style={{ textShadow: '0 1px 4px rgba(0,0,0,0.15)' }}
+            >
+              Crafting premium beats and soundscapes. Based in Switzerland, creating music for artists worldwide.
+            </p>
+            
+            {/* Navigation links */}
+            <div className="flex flex-wrap gap-4">
+              <GlassLink href="https://www.instagram.com/mfera_0/" external>
+                Instagram
+              </GlassLink>
+              <GlassLink href="https://www.beatstars.com/mfera" external>
+                BeatStars
+              </GlassLink>
+              <GlassLink href="mailto:mfera8957@gmail.com">
+                Email
+              </GlassLink>
+            </div>
+          </div>
         </motion.div>
 
-        {/* Subtitle */}
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          className="mt-4 md:mt-6 text-sm md:text-base tracking-[0.3em] uppercase text-muted-foreground font-light"
-        >
-          swiss producer
-        </motion.p>
-
-        {/* Animated line */}
+        {/* Credits link glass card */}
         <motion.div
-          initial={{ scaleX: 0 }}
-          animate={{ scaleX: 1 }}
-          transition={{ duration: 1, delay: 1.2, ease: [0.16, 1, 0.3, 1] }}
-          className="mt-12 w-16 h-px bg-foreground/20 origin-center"
-        />
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <Link href="/credits">
+            <div 
+              className="px-8 py-4 rounded-xl cursor-pointer transition-all duration-300 hover:scale-105"
+              style={{
+                background: 'rgba(255, 255, 255, 0.1)',
+                backdropFilter: 'blur(16px)',
+                WebkitBackdropFilter: 'blur(16px)',
+                boxShadow: '0 4px 24px rgba(0, 0, 0, 0.08), inset 0 0 0 1px rgba(255, 255, 255, 0.15)',
+              }}
+            >
+              <span 
+                className="text-sm tracking-[0.2em] uppercase font-medium text-white/90"
+                style={{ textShadow: '0 1px 4px rgba(0,0,0,0.15)' }}
+              >
+                View Credits
+              </span>
+            </div>
+          </Link>
+        </motion.div>
 
-        {/* Floating decorative elements */}
+        {/* Footer info */}
         <motion.div
           initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1.5, delay: 1.5 }}
-          className="absolute bottom-12 left-6 md:left-12 text-[10px] tracking-[0.15em] uppercase text-muted-foreground/60"
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 1, delay: 0.4 }}
+          className="flex items-center gap-8 text-[10px] tracking-[0.15em] uppercase text-white/50"
+          style={{ textShadow: '0 1px 4px rgba(0,0,0,0.2)' }}
         >
-          <span className="inline-block">Based in Switzerland</span>
+          <span>Based in Switzerland</span>
+          <span className="w-px h-3 bg-white/20" />
+          <span>EST. 2024</span>
         </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1.5, delay: 1.5 }}
-          className="absolute bottom-12 right-6 md:right-12 text-[10px] tracking-[0.15em] uppercase text-muted-foreground/60"
-        >
-          <span className="inline-block">EST. 2024</span>
-        </motion.div>
-      </div>
-
-      
+      </section>
     </main>
   )
 }
 
-const RANDOM_FONTS = [
-  'Georgia, serif',
-  'Times New Roman, serif',
-  'Courier New, monospace',
-  'Impact, sans-serif',
-  'Comic Sans MS, cursive',
-  'Trebuchet MS, sans-serif',
-  'Verdana, sans-serif',
-  'Palatino, serif',
-  'Garamond, serif',
-  'Bookman, serif',
-  'Arial Black, sans-serif',
-  'Brush Script MT, cursive',
-  'Lucida Console, monospace',
-  'Copperplate, serif',
-  'Papyrus, fantasy',
-]
+// Animated letter component with frame switching
+function AnimatedLetter({ 
+  letter, 
+  delay = 0 
+}: { 
+  letter: keyof typeof LETTER_SPRITES
+  delay?: number 
+}) {
+  const [frame, setFrame] = useState(1)
+  
+  useEffect(() => {
+    // Offset each letter's animation by its delay for variety
+    const timeout = setTimeout(() => {
+      const interval = setInterval(() => {
+        setFrame(prev => prev === 1 ? 2 : 1)
+      }, 400)
+      
+      return () => clearInterval(interval)
+    }, delay * 1000)
+    
+    return () => clearTimeout(timeout)
+  }, [delay])
+  
+  // Start interval immediately as well
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFrame(prev => prev === 1 ? 2 : 1)
+    }, 400)
+    
+    return () => clearInterval(interval)
+  }, [])
 
-function HoverLetter({ letter, index }: { letter: string; index: number }) {
-  const [font, setFont] = useState('Helvetica, Arial, sans-serif')
-  const [isHovered, setIsHovered] = useState(false)
-
-  const handleMouseEnter = () => {
-    const randomFont = RANDOM_FONTS[Math.floor(Math.random() * RANDOM_FONTS.length)]
-    setFont(randomFont)
-    setIsHovered(true)
-  }
-
-  const handleMouseLeave = () => {
-    setFont('Helvetica, Arial, sans-serif')
-    setIsHovered(false)
-  }
+  const sprites = LETTER_SPRITES[letter]
+  const currentSrc = frame === 1 ? sprites.frame1 : sprites.frame2
 
   return (
-    <motion.span
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      className="relative inline-block cursor-default"
-      style={{ fontFamily: font }}
-      animate={{ 
-        scale: isHovered ? 1.05 : 1,
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, delay: delay }}
+      className="relative w-[22vw] h-[28vw] md:w-[18vw] md:h-[24vw] lg:w-[14vw] lg:h-[18vw]"
+      style={{
+        filter: 'drop-shadow(0 8px 24px rgba(0,0,0,0.3))',
       }}
-      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
     >
-      {/* Shadow layers */}
-      <span 
-        className="absolute inset-0 text-foreground/[0.03] blur-[2px]"
-        style={{ transform: 'translate(4px, 4px)', fontFamily: font }}
-        aria-hidden="true"
-      >
-        {letter}
-      </span>
-      <span 
-        className="absolute inset-0 text-foreground/[0.02] blur-[4px]"
-        style={{ transform: 'translate(8px, 8px)', fontFamily: font }}
-        aria-hidden="true"
-      >
-        {letter}
-      </span>
-      {/* Main letter */}
-      <span className="relative">{letter}</span>
-    </motion.span>
+      <Image
+        src={currentSrc}
+        alt={letter}
+        fill
+        className="object-contain"
+        unoptimized
+      />
+    </motion.div>
   )
 }
 
-function NavLink({ 
+// Glass-styled link button
+function GlassLink({ 
   href, 
   children, 
   external = false 
@@ -236,12 +263,16 @@ function NavLink({
     <a
       href={href}
       {...linkProps}
-      className="group relative text-xs tracking-[0.2em] uppercase font-medium text-muted-foreground hover:text-foreground transition-colors duration-300"
+      className="px-5 py-2.5 rounded-lg text-xs tracking-[0.15em] uppercase font-medium text-white/90 transition-all duration-300 hover:scale-105 hover:bg-white/20"
+      style={{
+        background: 'rgba(255, 255, 255, 0.1)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        boxShadow: '0 2px 12px rgba(0, 0, 0, 0.08), inset 0 0 0 1px rgba(255, 255, 255, 0.12)',
+        textShadow: '0 1px 4px rgba(0,0,0,0.15)',
+      }}
     >
-      <span className="relative z-10">{children}</span>
-      <span className="absolute bottom-0 left-0 w-0 h-px bg-foreground transition-all duration-300 ease-out group-hover:w-full" />
+      {children}
     </a>
   )
 }
-
-
